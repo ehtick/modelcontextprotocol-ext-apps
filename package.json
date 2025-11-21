@@ -1,0 +1,42 @@
+{
+  "homepage": "https://gist.github.com/a9603ba2d6757d6038ce066eded4c354",
+  "name": "@modelcontextprotocol/ext-apps",
+  "version": "1.0.0",
+  "description": "Hey",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.ts",
+    "./react/useApp": "./src/react/useApp.tsx"
+  },
+  "scripts": {
+    "start:example-server0": "tsx examples/example-server.ts",
+    "start:example-server": "cd ../openai-apps-sdk-examples && concurrently \"npm run serve\" \"cd pizzaz_server_node && PORT=3001 npm start\"",
+    "start:sandbox-proxy": "python3 sandbox_proxy.py",
+    "start": "npm run build && npm run start:example-server",
+    "start:dev": "NODE_ENV=development npm start",
+    "build": "tsc && tsx build.ts",
+    "prettier:base-cmd": "prettier -u --ignore-path ./.gitignore --ignore-path ./.prettierignore",
+    "prettier": "yarn prettier:base-cmd \"$(pwd)/**/*.{js,jsx,ts,tsx,mjs,json,md,yml,yaml}\" --check",
+    "prettier:fix": "yarn prettier:base-cmd \"$(pwd)/**/*.{js,jsx,ts,tsx,mjs,json,md,yml,yaml}\" --write --list-different"
+  },
+  "author": "Olivier Chafik",
+  "devDependencies": {
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.5",
+    "esbuild": "~0.19.10",
+    "express": "^5.1.0",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.6",
+    "typescript": "5.7.2"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^3.25 || ^4.0"
+  }
+}
