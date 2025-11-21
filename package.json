@@ -16,7 +16,7 @@
     },
     "./app-bridge": {
       "default": "./dist/src/app-bridge.js",
-      "types": "./dist/src/app-host.d.ts"
+      "types": "./dist/src/app-bridge.d.ts"
     }
   },
   "files": [
