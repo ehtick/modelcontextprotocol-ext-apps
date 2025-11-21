@@ -489,12 +489,12 @@ Host SHOULD add the message to the conversation thread, preserving the specified
 
 ##### Notifications (Host → UI)
 
-**`ui/notifications/tool-inputs`** \- Host MUST send this notification with the complete tool arguments after the Guest UI's initialize request completes.
+**`ui/notifications/tool-input`** \- Host MUST send this notification with the complete tool arguments after the Guest UI's initialize request completes.
 
 \`\`\`  
 {  
  jsonrpc: "2.0",  
- method: "ui/tool-inputs",  
+ method: "ui/notifications/tool-input",  
  params: {  
  arguments: Record\<string, unknown\> // Tool input arguments  
  }  
@@ -503,12 +503,12 @@ Host SHOULD add the message to the conversation thread, preserving the specified
 
 Host sends this notification after the Guest UI's `initialize` request completes, when tool arguments become available. This notification is sent at most once and is required before sending `ui/tool-result`.
 
-**`ui/tool-inputs-partial`** \- Host MAY send this notification zero or more times while the agent is streaming tool arguments, before ui/tool-inputs is sent.
+**`ui/notifications/tool-input-partial`** \- Host MAY send this notification zero or more times while the agent is streaming tool arguments, before ui/notifications/tool-input is sent.
 
 \`\`\`  
 {  
  jsonrpc: "2.0",  
- method: "ui/tool-inputs-partial",  
+ method: "ui/notifications/tool-input-partial",  
  params: {  
  arguments: Record\<string, unknown\> // Tool input arguments  
  }  
@@ -519,7 +519,7 @@ The arguments object represents best-effort recovery of incomplete JSON, with un
 
 - MAY parse the agent's partial JSON output by closing unclosed brackets/braces
 - MAY send recovered arguments as they become available during streaming
-- MUST stop sending once ui/tool-inputs is sent with complete arguments
+- MUST stop sending once ui/notifications/tool-input is sent with complete arguments
 
 Guest UI behavior (optional):
 
@@ -683,9 +683,9 @@ autonumber
  H **\--\>\>** UI**:** InitializeResult (e.g., host-context, capabilities, etc.)  
  UI **\-\>\>** H**:** notifications/initialized  
  **opt** Stream Tool input to UI  
- H **\--\>\>** UI**:** ui/notifications/tool-inputs-partial (0..n)  
+ H **\--\>\>** UI**:** ui/notifications/tool-input-partial (0..n)  
  **end**  
- H **\--\>\>** UI**:** ui/notifications/tool-inputs (complete)  
+ H **\--\>\>** UI**:** ui/notifications/tool-input (complete)  
  **end**  
  **alt** Tool complete  
  H **\--\>\>** UI**:** ui/notifications/tool-result  
@@ -710,9 +710,9 @@ autonumber
  UI **\-\>\>** H**:** tools/call  
  H **\-\>\>** S**:** tools/call  
  **opt** Stream Tool input to UI  
- H **\--\>\>** UI**:** ui/notifications/tool-inputs-partial (0..n)  
+ H **\--\>\>** UI**:** ui/notifications/tool-input-partial (0..n)  
  **end**  
- H **\--\>\>** UI**:** ui/notifications/tool-inputs (complete)  
+ H **\--\>\>** UI**:** ui/notifications/tool-input (complete)  
  H**\--\>\>**UI**:** ui/notifications/tool-result  
  **else** Message  
  UI **\-\>\>** H**:** ui/message  
@@ -758,7 +758,7 @@ autonumber
 
 Tool execution results are passed to the UI through two mechanisms:
 
-#### 1\. Tool Input (via `ui/notifications/tool-inputs` notification)
+#### 1\. Tool Input (via `ui/notifications/tool-input` notification)
 
 The original tool call arguments:  
 \`\`\`  
@@ -766,7 +766,7 @@ The original tool call arguments:
 tools/call("get_weather", { location: "San Francisco" })
 
 // UI receives:  
-notification: ui/tool-inputs  
+notification: ui/notifications/tool-input  
 params: {  
  arguments: { location: "San Francisco" }  
 }  

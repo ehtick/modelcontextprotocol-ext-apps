@@ -75,7 +75,7 @@ export type McpUiSizeChangeNotification = z.infer<
 >;
 
 export const McpUiToolInputNotificationSchema = z.object({
-  method: z.literal("ui/notifications/tool-inputs"),
+  method: z.literal("ui/notifications/tool-input"),
   params: z.object({
     arguments: z.record(z.unknown()).optional(),
   }),
@@ -85,7 +85,7 @@ export type McpUiToolInputNotification = z.infer<
 >;
 
 export const McpUiToolInputPartialNotificationSchema = z.object({
-  method: z.literal("ui/notifications/tool-inputs-partial"),
+  method: z.literal("ui/notifications/tool-input-partial"),
   params: z.object({
     arguments: z.record(z.unknown()).optional(),
   }),

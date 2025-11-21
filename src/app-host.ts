@@ -120,7 +120,7 @@ export class AppHost extends Protocol<Request, Notification, Result> {
 
   sendToolInput(params: McpUiToolInputNotification["params"]) {
     return this.notification(<McpUiToolInputNotification>{
-      method: "ui/notifications/tool-inputs",
+      method: "ui/notifications/tool-input",
       params,
     });
   }
