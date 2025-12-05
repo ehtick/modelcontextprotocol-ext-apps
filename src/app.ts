@@ -581,11 +581,17 @@ export class App extends Protocol<Request, Notification, Result> {
     params: CallToolRequest["params"],
     options?: RequestOptions,
   ): Promise<CallToolResult> {
-    return await this.request(
+    const response = await this.request(
       { method: "tools/call", params },
       CallToolResultSchema,
       options,
     );
+    // TEMPORAL HACK: Some host implementations incorrectly return the full
+    // JSON-RPC envelope instead of just the result. Unwrap if needed.
+    if (response && "result" in response && "jsonrpc" in response) {
+      return (response as unknown as { result: CallToolResult }).result;
+    }
+    return response;
   }
 
   /**
