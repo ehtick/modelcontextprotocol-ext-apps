@@ -51,6 +51,7 @@ export { PostMessageTransport } from "./message-transport";
 export * from "./types";
 export {
   applyHostStyleVariables,
+  applyHostFonts,
   getDocumentTheme,
   applyDocumentTheme,
 } from "./styles";
