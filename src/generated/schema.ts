@@ -539,7 +539,9 @@ export const McpUiHostContextSchema = z
     toolInfo: z
       .object({
         /** @description JSON-RPC id of the tools/call request. */
-        id: RequestIdSchema.describe("JSON-RPC id of the tools/call request."),
+        id: RequestIdSchema.optional().describe(
+          "JSON-RPC id of the tools/call request.",
+        ),
         /** @description Tool definition including name, inputSchema, etc. */
         tool: ToolSchema.describe(
           "Tool definition including name, inputSchema, etc.",

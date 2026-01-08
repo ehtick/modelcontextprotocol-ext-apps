@@ -248,7 +248,7 @@
                   "additionalProperties": false
                 }
               },
-              "required": ["id", "tool"],
+              "required": ["tool"],
               "additionalProperties": false
             },
             "theme": {
@@ -919,7 +919,7 @@
               "additionalProperties": false
             }
           },
-          "required": ["id", "tool"],
+          "required": ["tool"],
           "additionalProperties": false
         },
         "theme": {
@@ -2127,7 +2127,7 @@
                   "additionalProperties": false
                 }
               },
-              "required": ["id", "tool"],
+              "required": ["tool"],
               "additionalProperties": false
             },
             "theme": {

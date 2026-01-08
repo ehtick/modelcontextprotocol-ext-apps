@@ -313,7 +313,7 @@ export interface McpUiHostContext {
   /** @description Metadata of the tool call that instantiated this App. */
   toolInfo?: {
     /** @description JSON-RPC id of the tools/call request. */
-    id: RequestId;
+    id?: RequestId;
     /** @description Tool definition including name, inputSchema, etc. */
     tool: Tool;
   };
