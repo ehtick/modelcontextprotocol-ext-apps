@@ -21,7 +21,7 @@ import {
 function getDocumentTheme_checkCurrent() {
   //#region getDocumentTheme_checkCurrent
   const theme = getDocumentTheme();
-  const isDark = theme === "dark";
+  document.body.classList.toggle("dark", theme === "dark");
   //#endregion getDocumentTheme_checkCurrent
 }
 
@@ -30,11 +30,20 @@ function getDocumentTheme_checkCurrent() {
  */
 function applyDocumentTheme_fromHostContext(app: App) {
   //#region applyDocumentTheme_fromHostContext
+  // Apply when host context changes
   app.onhostcontextchanged = (params) => {
     if (params.theme) {
       applyDocumentTheme(params.theme);
     }
   };
+
+  // Apply initial theme after connecting
+  app.connect().then(() => {
+    const ctx = app.getHostContext();
+    if (ctx?.theme) {
+      applyDocumentTheme(ctx.theme);
+    }
+  });
   //#endregion applyDocumentTheme_fromHostContext
 }
 

@@ -32,22 +32,6 @@ function errorsToModel(app: App) {
 }
 
 /**
- * Example: Reacting to light/dark theme changes
- */
-function lightDarkTheme(app: App) {
-  //#region lightDarkTheme
-  const applyTheme = (theme: string) => {
-    document.documentElement.dataset.theme = theme;
-  };
-
-  applyTheme(app.getHostContext()?.theme ?? "light");
-  app.onhostcontextchanged = (params) => {
-    if (params.theme) applyTheme(params.theme);
-  };
-  //#endregion lightDarkTheme
-}
-
-/**
  * Example: Support fullscreen / exit fullscreen
  */
 function fullscreen() {
@@ -103,7 +87,6 @@ function migrateFromOpenai() {
 // Suppress unused variable warnings
 void authenticatedCalls;
 void errorsToModel;
-void lightDarkTheme;
 void fullscreen;
 void persistData;
 void lowerPerceivedLatency;

@@ -39,9 +39,17 @@ Hosts provide CSS variables (e.g., `--color-background-primary`) that match thei
 
 {@includeCode ../src/react/useHostStyles.examples.tsx#useHostStyles_basicUsage}
 
-## [TODO] Reacting to light/dark theme changes
+## Reacting to light/dark theme changes
 
-{@includeCode ./patterns.ts#lightDarkTheme}
+The host provides a `theme` value (`"light"` or `"dark"`) in the context. Apply it to `<html data-theme="...">` so you can use CSS selectors like `[data-theme="dark"]` for styling.
+
+**Vanilla JS:**
+
+{@includeCode ../src/styles.examples.ts#applyDocumentTheme_fromHostContext}
+
+**React:** `useHostStyles()` (shown above) applies theme automatically. To read the theme reactively for conditional rendering:
+
+{@includeCode ../src/react/useDocumentTheme.examples.tsx#useDocumentTheme_conditionalRender}
 
 ## [TODO] Support fullscreen / exit fullscreen
 
