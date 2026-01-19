@@ -13,6 +13,8 @@ import {
   applyHostFonts,
   applyHostStyleVariables,
 } from "../src/styles.js";
+import { randomUUID } from "node:crypto";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { McpUiHostContext } from "../src/types.js";
 import { useApp, useHostStyles } from "../src/react/index.js";
 
@@ -87,16 +89,72 @@ function hostStylingReact() {
 }
 
 /**
- * Example: Persist data (incl. widget state)
+ * Example: Persisting widget state (server-side)
  */
-function persistData(app: App) {
+function persistWidgetStateServer(
+  url: string,
+  title: string,
+  pageCount: number,
+) {
+  function toolCallback(): CallToolResult {
+    //#region persistDataServer
+    // In your tool callback, include widgetUUID in the result metadata.
+    return {
+      content: [{ type: "text", text: `Displaying PDF viewer for "${title}"` }],
+      structuredContent: { url, title, pageCount, initialPage: 1 },
+      _meta: {
+        widgetUUID: randomUUID(),
+      },
+    };
+    //#endregion persistDataServer
+  }
+}
+
+/**
+ * Example: Persisting widget state (client-side)
+ */
+function persistWidgetState(app: App) {
   //#region persistData
-  // Note: OAI's window.openai.setWidgetState({modelContent, privateContent, imageIds})
-  // has only a partial equivalent in MCP Apps: App.updateModelContext({content, structuredContent})
-  // For data persistence / to reload when conversation is reloaded,
-  // use localStorage / IndexedDb with hostInfo.toolInfo.id as key
-  // returned CallToolResult._meta.widgetUUID = randomUUID()
-  // TODO: Complete implementation
+  // Store the widgetUUID received from the server
+  let widgetUUID: string | undefined;
+
+  // Helper to save state to localStorage
+  function saveState<T>(state: T): void {
+    if (!widgetUUID) return;
+    try {
+      localStorage.setItem(widgetUUID, JSON.stringify(state));
+    } catch (err) {
+      console.error("Failed to save widget state:", err);
+    }
+  }
+
+  // Helper to load state from localStorage
+  function loadState<T>(): T | null {
+    if (!widgetUUID) return null;
+    try {
+      const saved = localStorage.getItem(widgetUUID);
+      return saved ? (JSON.parse(saved) as T) : null;
+    } catch (err) {
+      console.error("Failed to load widget state:", err);
+      return null;
+    }
+  }
+
+  // Receive widgetUUID from the tool result
+  app.ontoolresult = (result) => {
+    widgetUUID = result._meta?.widgetUUID
+      ? String(result._meta.widgetUUID)
+      : undefined;
+
+    // Restore any previously saved state
+    const savedState = loadState<{ currentPage: number }>();
+    if (savedState) {
+      // Apply restored state to your UI...
+    }
+  };
+
+  // Call saveState() whenever your widget state changes
+  // e.g., saveState({ currentPage: 5 });
   //#endregion persistData
 }
 
@@ -123,6 +181,7 @@ function migrateFromOpenai() {
 void authenticatedCalls;
 void hostStylingVanillaJs;
 void hostStylingReact;
-void persistData;
+void persistWidgetStateServer;
+void persistWidgetState;
 void iframeAndMcpApps;
 void migrateFromOpenai;

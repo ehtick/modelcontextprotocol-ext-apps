@@ -54,12 +54,19 @@ Listen for display mode changes via {@link app!App.onhostcontextchanged onhostco
 
 {@includeCode ../src/app.examples.ts#App_onhostcontextchanged_respondToDisplayMode}
 
-## [TODO] Persist data (incl. widget state)
+## Persisting widget state
 
-- Note: OAI's `window.openai.setWidgetState({modelContent, privateContent, imageIds})` has only a partial equivalent in the MCP Apps spec (for now!): `App.updateModelContext({content, structuredContent})`
-- For data persistence / to reload when conversation is reloaded, you must use localStorage / IndexedDb with `hostInfo.toolInfo.id` as key returned `CallToolResult._meta.widgetUUID = randomUUID()`
+To persist widget state across conversation reloads (e.g., current page in a PDF viewer, camera position in a map), use [`localStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) with a stable identifier provided by the server.
+
+**Server-side**: Tool handler generates a unique `widgetUUID` and returns it in `CallToolResult._meta.widgetUUID`:
+
+{@includeCode ./patterns.tsx#persistDataServer}
+
+**Client-side**: Receive the UUID in {@link app!App.ontoolresult ontoolresult} and use it as the storage key:
 
 {@includeCode ./patterns.tsx#persistData}
+
+> **Note:** For model-visible state (informing the LLM about what the user is viewing), use {@link app!App.updateModelContext updateModelContext} instead. Widget state persistence is for UI state that should survive page reloads but doesn't need to be seen by the model.
 
 ## Lowering perceived latency
 
