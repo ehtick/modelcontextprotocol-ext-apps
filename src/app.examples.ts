@@ -345,23 +345,27 @@ function App_sendLog_debugState(app: App) {
 /**
  * Example: Update model context with current app state.
  */
-async function App_updateModelContext_appState(app: App) {
+async function App_updateModelContext_appState(
+  app: App,
+  itemList: string[],
+  totalCost: string,
+  currency: string,
+) {
   //#region App_updateModelContext_appState
+  const markdown = `---
+item-count: ${itemList.length}
+total-cost: ${totalCost}
+currency: ${currency}
+---
+
+User is viewing their shopping cart with ${itemList.length} items selected:
+
+${itemList.map((item) => `- ${item}`).join("\n")}`;
+
   await app.updateModelContext({
-    content: [{ type: "text", text: "User selected 3 items totaling $150.00" }],
+    content: [{ type: "text", text: markdown }],
   });
   //#endregion App_updateModelContext_appState
-}
-
-/**
- * Example: Update with structured content.
- */
-async function App_updateModelContext_structuredContent(app: App) {
-  //#region App_updateModelContext_structuredContent
-  await app.updateModelContext({
-    structuredContent: { selectedItems: 3, total: 150.0, currency: "USD" },
-  });
-  //#endregion App_updateModelContext_structuredContent
 }
 
 /**

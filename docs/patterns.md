@@ -58,6 +58,12 @@ Listen for display mode changes via {@link app!App.onhostcontextchanged onhostco
 
 {@includeCode ../src/app.examples.ts#App_onhostcontextchanged_respondToDisplayMode}
 
+## Passing contextual information from the App to the Model
+
+Use {@link app!App.updateModelContext updateModelContext} to keep the model informed about what the user is viewing or interacting with. Structure the content with YAML frontmatter for easy parsing:
+
+{@includeCode ../src/app.examples.ts#App_updateModelContext_appState}
+
 ## Persisting widget state
 
 To persist widget state across conversation reloads (e.g., current page in a PDF viewer, camera position in a map), use [`localStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) with a stable identifier provided by the server.

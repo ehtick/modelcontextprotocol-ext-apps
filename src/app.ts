@@ -654,13 +654,12 @@ export class App extends Protocol<AppRequest, AppNotification, AppResult> {
   /**
    * Update the host's model context with app state.
    *
-   * Unlike `sendLog`, which is for debugging/telemetry, context updates
-   * are intended to be available to the model in future reasoning,
-   * without requiring a follow-up action (like `sendMessage`).
+   * Context updates are intended to be available to the model in future
+   * turns, without triggering an immediate model response (unlike {@link sendMessage}).
    *
    * The host will typically defer sending the context to the model until the
-   * next user message (including `ui/message`), and will only send the last
-   * update received. Each call overwrites any previous context update.
+   * next user message — either from the actual user or via `sendMessage`. Only
+   * the last update is sent; each call overwrites any previous context.
    *
    * @param params - Context content and/or structured content
    * @param options - Request options (timeout, etc.)
@@ -670,9 +669,6 @@ export class App extends Protocol<AppRequest, AppNotification, AppResult> {
    *
    * @example Update model context with current app state
    * {@includeCode ./app.examples.ts#App_updateModelContext_appState}
-   *
-   * @example Update with structured content
-   * {@includeCode ./app.examples.ts#App_updateModelContext_structuredContent}
    *
    * @example Report runtime error to model
    * {@includeCode ./app.examples.ts#App_updateModelContext_reportError}
