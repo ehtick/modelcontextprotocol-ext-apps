@@ -77,6 +77,19 @@ export function applyDocumentTheme(theme: McpUiTheme): void {
  * @example Apply to a specific element
  * {@includeCode ./styles.examples.ts#applyHostStyleVariables_toElement}
  *
+ * @example Use host style variables in CSS
+ * ```css
+ * body {
+ *   background-color: var(--color-background-primary);
+ *   color: var(--color-text-primary);
+ * }
+ *
+ * .card {
+ *   background-color: var(--color-background-secondary);
+ *   border: 1px solid var(--color-border-primary);
+ * }
+ * ```
+ *
  * @see {@link McpUiStyles} for the available CSS variables
  * @see {@link McpUiHostContext} for the full host context structure
  */
@@ -116,7 +129,7 @@ export function applyHostStyleVariables(
  * @example Use host fonts in CSS
  * ```css
  * body {
- *   font-family: "Anthropic Sans", sans-serif;
+ *   font-family: var(--font-sans, system-ui, sans-serif);
  * }
  * ```
  *

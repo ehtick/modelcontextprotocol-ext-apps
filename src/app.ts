@@ -156,9 +156,6 @@ type RequestHandlerExtra = Parameters<
  *
  * @example Basic usage with PostMessageTransport
  * {@includeCode ./app.examples.ts#App_basicUsage}
- *
- * @example Sending a message to the host's chat
- * {@includeCode ./app.examples.ts#App_sendMessage}
  */
 export class App extends Protocol<AppRequest, AppNotification, AppResult> {
   private _hostCapabilities?: McpUiHostCapabilities;
@@ -286,6 +283,11 @@ export class App extends Protocol<AppRequest, AppNotification, AppResult> {
    * Set this property to register a handler that will be called as the host
    * streams partial tool arguments during tool call initialization. This enables
    * progressive rendering of tool arguments before they're complete.
+   *
+   * **Important:** Partial arguments are "healed" JSON — the host closes unclosed
+   * brackets/braces to produce valid JSON. This means objects may be incomplete
+   * (e.g., the last item in an array may be truncated). Use partial data only
+   * for preview UI, not for critical operations.
    *
    * This setter is a convenience wrapper around `setNotificationHandler()` that
    * automatically handles the notification schema and extracts the params for you.
@@ -613,6 +615,9 @@ export class App extends Protocol<AppRequest, AppNotification, AppResult> {
    * @example Send a text message from user interaction
    * {@includeCode ./app.examples.ts#App_sendMessage_textFromInteraction}
    *
+   * @example Send follow-up message after offloading large data to model context
+   * {@includeCode ./app.examples.ts#App_sendMessage_withLargeContext}
+   *
    * @see {@link McpUiMessageRequest} for request structure
    */
   sendMessage(params: McpUiMessageRequest["params"], options?: RequestOptions) {
@@ -649,13 +654,12 @@ export class App extends Protocol<AppRequest, AppNotification, AppResult> {
   /**
    * Update the host's model context with app state.
    *
-   * Unlike `sendLog`, which is for debugging/telemetry, context updates
-   * are intended to be available to the model in future reasoning,
-   * without requiring a follow-up action (like `sendMessage`).
+   * Context updates are intended to be available to the model in future
+   * turns, without triggering an immediate model response (unlike {@link sendMessage}).
    *
    * The host will typically defer sending the context to the model until the
-   * next user message (including `ui/message`), and will only send the last
-   * update received. Each call overwrites any previous context update.
+   * next user message — either from the actual user or via `sendMessage`. Only
+   * the last update is sent; each call overwrites any previous context.
    *
    * @param params - Context content and/or structured content
    * @param options - Request options (timeout, etc.)
@@ -666,8 +670,8 @@ export class App extends Protocol<AppRequest, AppNotification, AppResult> {
    * @example Update model context with current app state
    * {@includeCode ./app.examples.ts#App_updateModelContext_appState}
    *
-   * @example Update with structured content
-   * {@includeCode ./app.examples.ts#App_updateModelContext_structuredContent}
+   * @example Report runtime error to model
+   * {@includeCode ./app.examples.ts#App_updateModelContext_reportError}
    *
    * @returns Promise that resolves when the context update is acknowledged
    */
@@ -729,8 +733,8 @@ export class App extends Protocol<AppRequest, AppNotification, AppResult> {
    * @param options - Request options (timeout, etc.)
    * @returns Result containing the actual display mode that was set
    *
-   * @example Request fullscreen mode
-   * {@includeCode ./app.examples.ts#App_requestDisplayMode_fullscreen}
+   * @example Toggle display mode
+   * {@includeCode ./app.examples.ts#App_requestDisplayMode_toggle}
    *
    * @see {@link McpUiRequestDisplayModeRequest} for request structure
    * @see {@link McpUiHostContext} for checking availableDisplayModes
