@@ -1,7 +1,7 @@
 <!-- LOGO -->
 <h1>
 <p align="center">
-  <img src="" alt="MCP Apps SDK" width="128">
+  <img src="media/mcp.svg" alt="MCP Apps SDK" width="128">
   <br>MCP Apps SDK
 </h1>
   <p align="center">
@@ -19,7 +19,11 @@
   </p>
 </p>
 
+<p align="center">
+
 [![npm version](https://img.shields.io/npm/v/@modelcontextprotocol/ext-apps.svg)](https://www.npmjs.com/package/@modelcontextprotocol/ext-apps) [![API Documentation](https://img.shields.io/badge/docs-API%20Reference-blue)](https://modelcontextprotocol.github.io/ext-apps/api/)
+
+</p>
 
 ## Specification
 
