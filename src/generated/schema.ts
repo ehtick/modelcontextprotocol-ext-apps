@@ -162,6 +162,57 @@ export const McpUiOpenLinkResultSchema = z
   .passthrough();
 
 /**
+ * @description Request to download a file through the host.
+ *
+ * Sent from the View to the Host when the app wants to trigger a file download.
+ * Since MCP Apps run in sandboxed iframes where direct downloads are blocked,
+ * this provides a host-mediated mechanism for file exports.
+ * The host SHOULD show a confirmation dialog before initiating the download.
+ *
+ * @see {@link app!App.downloadFile `App.downloadFile`} for the method that sends this request
+ */
+export const McpUiDownloadFileRequestSchema = z.object({
+  method: z.literal("ui/download-file"),
+  params: z.object({
+    /** @description Suggested filename for the download. */
+    filename: z.string().describe("Suggested filename for the download."),
+    /** @description File content — text or base64-encoded binary. */
+    content: z
+      .string()
+      .describe("File content \u2014 text or base64-encoded binary."),
+    /** @description MIME type of the file (e.g. "image/svg+xml", "application/json"). */
+    mimeType: z
+      .string()
+      .describe(
+        'MIME type of the file (e.g. "image/svg+xml", "application/json").',
+      ),
+    /** @description Content encoding. Defaults to "utf-8". Use "base64" for binary content. */
+    encoding: z
+      .union([z.literal("utf-8"), z.literal("base64")])
+      .optional()
+      .describe(
+        'Content encoding. Defaults to "utf-8". Use "base64" for binary content.',
+      ),
+  }),
+});
+
+/**
+ * @description Result from a file download request.
+ * @see {@link McpUiDownloadFileRequest `McpUiDownloadFileRequest`}
+ */
+export const McpUiDownloadFileResultSchema = z
+  .object({
+    /** @description True if the download failed (e.g., user cancelled or host denied). */
+    isError: z
+      .boolean()
+      .optional()
+      .describe(
+        "True if the download failed (e.g., user cancelled or host denied).",
+      ),
+  })
+  .passthrough();
+
+/**
  * @description Result from sending a message.
  * @see {@link McpUiMessageRequest `McpUiMessageRequest`}
  */
@@ -476,6 +527,11 @@ export const McpUiHostCapabilitiesSchema = z.object({
     .object({})
     .optional()
     .describe("Host supports opening external URLs."),
+  /** @description Host supports file downloads via ui/download-file. */
+  downloadFile: z
+    .object({})
+    .optional()
+    .describe("Host supports file downloads via ui/download-file."),
   /** @description Host can proxy tool calls to the MCP server. */
   serverTools: z
     .object({

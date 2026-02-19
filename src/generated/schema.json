@@ -81,6 +81,61 @@
       ],
       "description": "Display mode for UI presentation."
     },
+    "McpUiDownloadFileRequest": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "method": {
+          "type": "string",
+          "const": "ui/download-file"
+        },
+        "params": {
+          "type": "object",
+          "properties": {
+            "filename": {
+              "type": "string",
+              "description": "Suggested filename for the download."
+            },
+            "content": {
+              "type": "string",
+              "description": "File content — text or base64-encoded binary."
+            },
+            "mimeType": {
+              "type": "string",
+              "description": "MIME type of the file (e.g. \"image/svg+xml\", \"application/json\")."
+            },
+            "encoding": {
+              "description": "Content encoding. Defaults to \"utf-8\". Use \"base64\" for binary content.",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "const": "utf-8"
+                },
+                {
+                  "type": "string",
+                  "const": "base64"
+                }
+              ]
+            }
+          },
+          "required": ["filename", "content", "mimeType"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["method", "params"],
+      "additionalProperties": false
+    },
+    "McpUiDownloadFileResult": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "isError": {
+          "description": "True if the download failed (e.g., user cancelled or host denied).",
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": {}
+    },
     "McpUiHostCapabilities": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -93,6 +148,12 @@
         },
         "openLinks": {
           "description": "Host supports opening external URLs.",
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        },
+        "downloadFile": {
+          "description": "Host supports file downloads via ui/download-file.",
           "type": "object",
           "properties": {},
           "additionalProperties": false
@@ -2439,6 +2500,12 @@
             },
             "openLinks": {
               "description": "Host supports opening external URLs.",
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            },
+            "downloadFile": {
+              "description": "Host supports file downloads via ui/download-file.",
               "type": "object",
               "properties": {},
               "additionalProperties": false

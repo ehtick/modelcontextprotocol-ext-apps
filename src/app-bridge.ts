@@ -69,6 +69,9 @@ import {
   McpUiOpenLinkRequest,
   McpUiOpenLinkRequestSchema,
   McpUiOpenLinkResult,
+  McpUiDownloadFileRequest,
+  McpUiDownloadFileRequestSchema,
+  McpUiDownloadFileResult,
   McpUiResourceTeardownRequest,
   McpUiResourceTeardownResultSchema,
   McpUiSandboxProxyReadyNotification,
@@ -608,6 +611,60 @@ export class AppBridge extends Protocol<
   ) {
     this.setRequestHandler(
       McpUiOpenLinkRequestSchema,
+      async (request, extra) => {
+        return callback(request.params, extra);
+      },
+    );
+  }
+
+  /**
+   * Register a handler for file download requests from the View.
+   *
+   * The View sends `ui/download-file` requests when the user wants to
+   * download a file. The host should show a confirmation dialog and then
+   * trigger the download.
+   *
+   * @param callback - Handler that receives download params and returns a result
+   *   - `params.filename` - Suggested filename for the download
+   *   - `params.content` - File content (text or base64-encoded)
+   *   - `params.mimeType` - MIME type of the file
+   *   - `params.encoding` - Content encoding ("utf-8" or "base64", defaults to "utf-8")
+   *   - `extra` - Request metadata (abort signal, session info)
+   *   - Returns: `Promise<McpUiDownloadFileResult>` with optional `isError` flag
+   *
+   * @example
+   * ```ts
+   * bridge.ondownloadfile = async ({ filename, content, mimeType, encoding }, extra) => {
+   *   const confirmed = await showDialog({
+   *     message: `Download "${filename}"?`,
+   *     buttons: ["Download", "Cancel"],
+   *   });
+   *   if (!confirmed) return { isError: true };
+   *
+   *   const blob = encoding === "base64"
+   *     ? new Blob([Uint8Array.from(atob(content), c => c.charCodeAt(0))], { type: mimeType })
+   *     : new Blob([content], { type: mimeType });
+   *   const url = URL.createObjectURL(blob);
+   *   const link = document.createElement("a");
+   *   link.href = url;
+   *   link.download = filename;
+   *   link.click();
+   *   URL.revokeObjectURL(url);
+   *   return {};
+   * };
+   * ```
+   *
+   * @see {@link McpUiDownloadFileRequest `McpUiDownloadFileRequest`} for the request type
+   * @see {@link McpUiDownloadFileResult `McpUiDownloadFileResult`} for the result type
+   */
+  set ondownloadfile(
+    callback: (
+      params: McpUiDownloadFileRequest["params"],
+      extra: RequestHandlerExtra,
+    ) => Promise<McpUiDownloadFileResult>,
+  ) {
+    this.setRequestHandler(
+      McpUiDownloadFileRequestSchema,
       async (request, extra) => {
         return callback(request.params, extra);
       },

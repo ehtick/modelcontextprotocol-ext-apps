@@ -169,6 +169,44 @@ export interface McpUiOpenLinkResult {
 }
 
 /**
+ * @description Request to download a file through the host.
+ *
+ * Sent from the View to the Host when the app wants to trigger a file download.
+ * Since MCP Apps run in sandboxed iframes where direct downloads are blocked,
+ * this provides a host-mediated mechanism for file exports.
+ * The host SHOULD show a confirmation dialog before initiating the download.
+ *
+ * @see {@link app!App.downloadFile `App.downloadFile`} for the method that sends this request
+ */
+export interface McpUiDownloadFileRequest {
+  method: "ui/download-file";
+  params: {
+    /** @description Suggested filename for the download. */
+    filename: string;
+    /** @description File content — text or base64-encoded binary. */
+    content: string;
+    /** @description MIME type of the file (e.g. "image/svg+xml", "application/json"). */
+    mimeType: string;
+    /** @description Content encoding. Defaults to "utf-8". Use "base64" for binary content. */
+    encoding?: "utf-8" | "base64";
+  };
+}
+
+/**
+ * @description Result from a file download request.
+ * @see {@link McpUiDownloadFileRequest `McpUiDownloadFileRequest`}
+ */
+export interface McpUiDownloadFileResult {
+  /** @description True if the download failed (e.g., user cancelled or host denied). */
+  isError?: boolean;
+  /**
+   * Index signature required for MCP SDK `Protocol` class compatibility.
+   * Note: The generated schema uses passthrough() to allow additional properties.
+   */
+  [key: string]: unknown;
+}
+
+/**
  * @description Request to send a message to the host's chat interface.
  * @see {@link app!App.sendMessage `App.sendMessage`} for the method that sends this request
  */
@@ -450,6 +488,8 @@ export interface McpUiHostCapabilities {
   experimental?: {};
   /** @description Host supports opening external URLs. */
   openLinks?: {};
+  /** @description Host supports file downloads via ui/download-file. */
+  downloadFile?: {};
   /** @description Host can proxy tool calls to the MCP server. */
   serverTools?: {
     /** @description Host supports tools/list_changed notifications. */
@@ -746,6 +786,8 @@ export interface McpUiToolMeta {
  * ```
  */
 export const OPEN_LINK_METHOD: McpUiOpenLinkRequest["method"] = "ui/open-link";
+export const DOWNLOAD_FILE_METHOD: McpUiDownloadFileRequest["method"] =
+  "ui/download-file";
 export const MESSAGE_METHOD: McpUiMessageRequest["method"] = "ui/message";
 export const SANDBOX_PROXY_READY_METHOD: McpUiSandboxProxyReadyNotification["method"] =
   "ui/notifications/sandbox-proxy-ready";

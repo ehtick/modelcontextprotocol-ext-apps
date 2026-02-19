@@ -33,6 +33,8 @@ import {
   McpUiMessageResultSchema,
   McpUiOpenLinkRequest,
   McpUiOpenLinkResultSchema,
+  McpUiDownloadFileRequest,
+  McpUiDownloadFileResultSchema,
   McpUiResourceTeardownRequest,
   McpUiResourceTeardownRequestSchema,
   McpUiResourceTeardownResult,
@@ -929,6 +931,59 @@ export class App extends Protocol<AppRequest, AppNotification, AppResult> {
 
   /** @deprecated Use {@link openLink `openLink`} instead */
   sendOpenLink: App["openLink"] = this.openLink;
+
+  /**
+   * Request the host to download a file.
+   *
+   * Since MCP Apps run in sandboxed iframes where direct downloads are blocked,
+   * this provides a host-mediated mechanism for file exports. The host will
+   * typically show a confirmation dialog before initiating the download.
+   *
+   * @param params - File content, filename, MIME type, and optional encoding
+   * @param options - Request options (timeout, etc.)
+   * @returns Result with `isError: true` if the host denied the request (e.g., user cancelled)
+   *
+   * @throws {Error} If the request times out or the connection is lost
+   *
+   * @example Download a JSON export
+   * ```ts
+   * const data = JSON.stringify({ items: selectedItems }, null, 2);
+   * const { isError } = await app.downloadFile({
+   *   filename: "export.json",
+   *   content: data,
+   *   mimeType: "application/json",
+   * });
+   * if (isError) {
+   *   console.warn("Download denied or cancelled");
+   * }
+   * ```
+   *
+   * @example Download binary content (base64)
+   * ```ts
+   * const { isError } = await app.downloadFile({
+   *   filename: "image.png",
+   *   content: base64EncodedPng,
+   *   mimeType: "image/png",
+   *   encoding: "base64",
+   * });
+   * ```
+   *
+   * @see {@link McpUiDownloadFileRequest `McpUiDownloadFileRequest`} for request structure
+   * @see {@link McpUiDownloadFileResult `McpUiDownloadFileResult`} for result structure
+   */
+  downloadFile(
+    params: McpUiDownloadFileRequest["params"],
+    options?: RequestOptions,
+  ) {
+    return this.request(
+      <McpUiDownloadFileRequest>{
+        method: "ui/download-file",
+        params,
+      },
+      McpUiDownloadFileResultSchema,
+      options,
+    );
+  }
 
   /**
    * Request a change to the display mode.

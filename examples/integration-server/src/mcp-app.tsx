@@ -137,6 +137,24 @@ function GetTimeAppInner({
     log.info("Open link request", isError ? "rejected" : "accepted");
   }, [app, linkUrl]);
 
+  const canDownload =
+    app.getHostCapabilities()?.downloadFile !== undefined;
+
+  const handleDownloadFile = useCallback(async () => {
+    const sampleContent = JSON.stringify(
+      { time: serverTime, exported: new Date().toISOString() },
+      null,
+      2,
+    );
+    log.info("Requesting file download...");
+    const { isError } = await app.downloadFile({
+      filename: "export.json",
+      content: sampleContent,
+      mimeType: "application/json",
+    });
+    log.info("Download", isError ? "rejected" : "accepted");
+  }, [app, serverTime]);
+
   return (
     <main
       className={styles.main}
@@ -182,6 +200,13 @@ function GetTimeAppInner({
         />
         <button onClick={handleOpenLink}>Open Link</button>
       </div>
+
+      {canDownload && (
+        <div className={styles.action}>
+          <p>Export current server time as JSON file</p>
+          <button onClick={handleDownloadFile}>Download File</button>
+        </div>
+      )}
     </main>
   );
 }
