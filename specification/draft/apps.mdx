@@ -1018,16 +1018,39 @@ Host SHOULD open the URL in the user's default browser or a new tab.
 `ui/download-file` - Request host to download a file
 
 ```typescript
-// Request
+// Request (EmbeddedResource — inline content)
 {
   jsonrpc: "2.0",
   id: 1,
   method: "ui/download-file",
   params: {
-    filename: string,                   // Suggested filename
-    content: string,                    // File content (text or base64-encoded)
-    mimeType: string,                   // MIME type (e.g. "image/svg+xml", "application/json")
-    encoding?: "utf-8" | "base64"      // Content encoding, defaults to "utf-8"
+    contents: [
+      {
+        type: "resource",
+        resource: {
+          uri: "file:///export.json",       // Used for suggested filename
+          mimeType: "application/json",
+          text: "{ ... }"                   // Text content (or `blob` for base64 binary)
+        }
+      }
+    ]
+  }
+}
+
+// Request (ResourceLink — host fetches)
+{
+  jsonrpc: "2.0",
+  id: 1,
+  method: "ui/download-file",
+  params: {
+    contents: [
+      {
+        type: "resource_link",
+        uri: "https://api.example.com/reports/q4.pdf",
+        name: "Q4 Report",
+        mimeType: "application/pdf"
+      }
+    ]
   }
 }
 
@@ -1051,12 +1074,15 @@ Host SHOULD open the URL in the user's default browser or a new tab.
 
 MCP Apps run in sandboxed iframes where direct file downloads are blocked (`allow-downloads` is not set). `ui/download-file` provides a host-mediated mechanism for apps to offer file exports — useful for visualization tools (SVG/PNG export), document editors, data analysis tools, and any app that produces downloadable artifacts.
 
+The `contents` array uses standard MCP resource types (`EmbeddedResource` and `ResourceLink`), avoiding custom content formats. For `EmbeddedResource`, content is inline via `text` (UTF-8) or `blob` (base64). For `ResourceLink`, the host can retrieve the content directly from the URI.
+
 Host behavior:
 * Host SHOULD show a confirmation dialog before initiating the download.
-* Host SHOULD use the `filename` as the suggested filename for the download.
-* For `encoding: "base64"`, host MUST decode the content from base64 before creating the file.
+* For `EmbeddedResource`, host SHOULD derive the filename from the last segment of `resource.uri`.
+* For `EmbeddedResource` with `blob`, host MUST decode the content from base64 before creating the file.
+* For `ResourceLink`, host MAY fetch the resource on behalf of the app or open the URI directly.
 * Host MAY reject the download based on security policy, file size limits, or user preferences.
-* Host SHOULD sanitize the filename to prevent path traversal.
+* Host SHOULD sanitize filenames to prevent path traversal.
 
 `ui/message` - Send message content to the host's chat interface
 

@@ -13,8 +13,10 @@
 import type {
   CallToolResult,
   ContentBlock,
+  EmbeddedResource,
   Implementation,
   RequestId,
+  ResourceLink,
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 
@@ -181,14 +183,8 @@ export interface McpUiOpenLinkResult {
 export interface McpUiDownloadFileRequest {
   method: "ui/download-file";
   params: {
-    /** @description Suggested filename for the download. */
-    filename: string;
-    /** @description File content — text or base64-encoded binary. */
-    content: string;
-    /** @description MIME type of the file (e.g. "image/svg+xml", "application/json"). */
-    mimeType: string;
-    /** @description Content encoding. Defaults to "utf-8". Use "base64" for binary content. */
-    encoding?: "utf-8" | "base64";
+    /** @description Resource contents to download — embedded (inline data) or linked (host fetches). Uses standard MCP resource types. */
+    contents: (EmbeddedResource | ResourceLink)[];
   };
 }
 

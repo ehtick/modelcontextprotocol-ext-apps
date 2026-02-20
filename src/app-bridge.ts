@@ -621,35 +621,37 @@ export class AppBridge extends Protocol<
    * Register a handler for file download requests from the View.
    *
    * The View sends `ui/download-file` requests when the user wants to
-   * download a file. The host should show a confirmation dialog and then
-   * trigger the download.
+   * download a file. The params contain an array of MCP resource content
+   * items — either `EmbeddedResource` (inline data) or `ResourceLink`
+   * (URI the host can fetch). The host should show a confirmation dialog
+   * and then trigger the download.
    *
    * @param callback - Handler that receives download params and returns a result
-   *   - `params.filename` - Suggested filename for the download
-   *   - `params.content` - File content (text or base64-encoded)
-   *   - `params.mimeType` - MIME type of the file
-   *   - `params.encoding` - Content encoding ("utf-8" or "base64", defaults to "utf-8")
+   *   - `params.contents` - Array of `EmbeddedResource` or `ResourceLink` items
    *   - `extra` - Request metadata (abort signal, session info)
    *   - Returns: `Promise<McpUiDownloadFileResult>` with optional `isError` flag
    *
    * @example
    * ```ts
-   * bridge.ondownloadfile = async ({ filename, content, mimeType, encoding }, extra) => {
-   *   const confirmed = await showDialog({
-   *     message: `Download "${filename}"?`,
-   *     buttons: ["Download", "Cancel"],
-   *   });
-   *   if (!confirmed) return { isError: true };
-   *
-   *   const blob = encoding === "base64"
-   *     ? new Blob([Uint8Array.from(atob(content), c => c.charCodeAt(0))], { type: mimeType })
-   *     : new Blob([content], { type: mimeType });
-   *   const url = URL.createObjectURL(blob);
-   *   const link = document.createElement("a");
-   *   link.href = url;
-   *   link.download = filename;
-   *   link.click();
-   *   URL.revokeObjectURL(url);
+   * bridge.ondownloadfile = async ({ contents }, extra) => {
+   *   for (const item of contents) {
+   *     if (item.type === "resource") {
+   *       // EmbeddedResource — inline content
+   *       const res = item.resource;
+   *       const blob = res.blob
+   *         ? new Blob([Uint8Array.from(atob(res.blob), c => c.charCodeAt(0))], { type: res.mimeType })
+   *         : new Blob([res.text ?? ""], { type: res.mimeType });
+   *       const url = URL.createObjectURL(blob);
+   *       const link = document.createElement("a");
+   *       link.href = url;
+   *       link.download = res.uri.split("/").pop() ?? "download";
+   *       link.click();
+   *       URL.revokeObjectURL(url);
+   *     } else if (item.type === "resource_link") {
+   *       // ResourceLink — host fetches or opens directly
+   *       window.open(item.uri, "_blank");
+   *     }
+   *   }
    *   return {};
    * };
    * ```

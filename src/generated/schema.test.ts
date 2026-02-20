@@ -35,10 +35,6 @@ export type McpUiOpenLinkResultSchemaInferredType = z.infer<
   typeof generated.McpUiOpenLinkResultSchema
 >;
 
-export type McpUiDownloadFileRequestSchemaInferredType = z.infer<
-  typeof generated.McpUiDownloadFileRequestSchema
->;
-
 export type McpUiDownloadFileResultSchemaInferredType = z.infer<
   typeof generated.McpUiDownloadFileResultSchema
 >;
@@ -131,6 +127,10 @@ export type McpUiClientCapabilitiesSchemaInferredType = z.infer<
   typeof generated.McpUiClientCapabilitiesSchema
 >;
 
+export type McpUiDownloadFileRequestSchemaInferredType = z.infer<
+  typeof generated.McpUiDownloadFileRequestSchema
+>;
+
 export type McpUiMessageRequestSchemaInferredType = z.infer<
   typeof generated.McpUiMessageRequestSchema
 >;
@@ -186,12 +186,6 @@ expectType<spec.McpUiOpenLinkResult>(
 );
 expectType<McpUiOpenLinkResultSchemaInferredType>(
   {} as spec.McpUiOpenLinkResult,
-);
-expectType<spec.McpUiDownloadFileRequest>(
-  {} as McpUiDownloadFileRequestSchemaInferredType,
-);
-expectType<McpUiDownloadFileRequestSchemaInferredType>(
-  {} as spec.McpUiDownloadFileRequest,
 );
 expectType<spec.McpUiDownloadFileResult>(
   {} as McpUiDownloadFileResultSchemaInferredType,
@@ -306,6 +300,12 @@ expectType<spec.McpUiClientCapabilities>(
 );
 expectType<McpUiClientCapabilitiesSchemaInferredType>(
   {} as spec.McpUiClientCapabilities,
+);
+expectType<spec.McpUiDownloadFileRequest>(
+  {} as McpUiDownloadFileRequestSchemaInferredType,
+);
+expectType<McpUiDownloadFileRequestSchemaInferredType>(
+  {} as spec.McpUiDownloadFileRequest,
 );
 expectType<spec.McpUiMessageRequest>(
   {} as McpUiMessageRequestSchemaInferredType,

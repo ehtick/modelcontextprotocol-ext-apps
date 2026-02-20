@@ -137,8 +137,7 @@ function GetTimeAppInner({
     log.info("Open link request", isError ? "rejected" : "accepted");
   }, [app, linkUrl]);
 
-  const canDownload =
-    app.getHostCapabilities()?.downloadFile !== undefined;
+  const canDownload = app.getHostCapabilities()?.downloadFile !== undefined;
 
   const handleDownloadFile = useCallback(async () => {
     const sampleContent = JSON.stringify(
@@ -148,12 +147,34 @@ function GetTimeAppInner({
     );
     log.info("Requesting file download...");
     const { isError } = await app.downloadFile({
-      filename: "export.json",
-      content: sampleContent,
-      mimeType: "application/json",
+      contents: [
+        {
+          type: "resource",
+          resource: {
+            uri: "file:///export.json",
+            mimeType: "application/json",
+            text: sampleContent,
+          },
+        },
+      ],
     });
     log.info("Download", isError ? "rejected" : "accepted");
   }, [app, serverTime]);
+
+  const handleDownloadLink = useCallback(async () => {
+    log.info("Requesting resource link download...");
+    const { isError } = await app.downloadFile({
+      contents: [
+        {
+          type: "resource_link",
+          uri: "resource:///sample-report.txt",
+          name: "sample-report.txt",
+          mimeType: "text/plain",
+        },
+      ],
+    });
+    log.info("Resource link download", isError ? "rejected" : "accepted");
+  }, [app]);
 
   return (
     <main
@@ -203,8 +224,11 @@ function GetTimeAppInner({
 
       {canDownload && (
         <div className={styles.action}>
-          <p>Export current server time as JSON file</p>
-          <button onClick={handleDownloadFile}>Download File</button>
+          <p>Download file via EmbeddedResource or ResourceLink</p>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={handleDownloadFile}>Embedded</button>
+            <button onClick={handleDownloadLink}>Link</button>
+          </div>
         </div>
       )}
     </main>

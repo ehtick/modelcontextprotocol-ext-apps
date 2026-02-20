@@ -939,32 +939,56 @@ export class App extends Protocol<AppRequest, AppNotification, AppResult> {
    * this provides a host-mediated mechanism for file exports. The host will
    * typically show a confirmation dialog before initiating the download.
    *
-   * @param params - File content, filename, MIME type, and optional encoding
+   * Uses standard MCP resource types: `EmbeddedResource` for inline content
+   * and `ResourceLink` for content the host can fetch directly.
+   *
+   * @param params - Resource contents to download
    * @param options - Request options (timeout, etc.)
    * @returns Result with `isError: true` if the host denied the request (e.g., user cancelled)
    *
    * @throws {Error} If the request times out or the connection is lost
    *
-   * @example Download a JSON export
+   * @example Download a JSON file (embedded text resource)
    * ```ts
    * const data = JSON.stringify({ items: selectedItems }, null, 2);
    * const { isError } = await app.downloadFile({
-   *   filename: "export.json",
-   *   content: data,
-   *   mimeType: "application/json",
+   *   contents: [{
+   *     type: "resource",
+   *     resource: {
+   *       uri: "file:///export.json",
+   *       mimeType: "application/json",
+   *       text: data,
+   *     },
+   *   }],
    * });
    * if (isError) {
    *   console.warn("Download denied or cancelled");
    * }
    * ```
    *
-   * @example Download binary content (base64)
+   * @example Download binary content (embedded blob resource)
    * ```ts
    * const { isError } = await app.downloadFile({
-   *   filename: "image.png",
-   *   content: base64EncodedPng,
-   *   mimeType: "image/png",
-   *   encoding: "base64",
+   *   contents: [{
+   *     type: "resource",
+   *     resource: {
+   *       uri: "file:///image.png",
+   *       mimeType: "image/png",
+   *       blob: base64EncodedPng,
+   *     },
+   *   }],
+   * });
+   * ```
+   *
+   * @example Download via resource link (host fetches)
+   * ```ts
+   * const { isError } = await app.downloadFile({
+   *   contents: [{
+   *     type: "resource_link",
+   *     uri: "https://api.example.com/reports/q4.pdf",
+   *     name: "Q4 Report",
+   *     mimeType: "application/pdf",
+   *   }],
    * });
    * ```
    *

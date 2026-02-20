@@ -5,8 +5,10 @@ import { z } from "zod";
 import {
   ContentBlockSchema,
   CallToolResultSchema,
+  EmbeddedResourceSchema,
   ImplementationSchema,
   RequestIdSchema,
+  ResourceLinkSchema,
   ToolSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
@@ -160,41 +162,6 @@ export const McpUiOpenLinkResultSchema = z
       ),
   })
   .passthrough();
-
-/**
- * @description Request to download a file through the host.
- *
- * Sent from the View to the Host when the app wants to trigger a file download.
- * Since MCP Apps run in sandboxed iframes where direct downloads are blocked,
- * this provides a host-mediated mechanism for file exports.
- * The host SHOULD show a confirmation dialog before initiating the download.
- *
- * @see {@link app!App.downloadFile `App.downloadFile`} for the method that sends this request
- */
-export const McpUiDownloadFileRequestSchema = z.object({
-  method: z.literal("ui/download-file"),
-  params: z.object({
-    /** @description Suggested filename for the download. */
-    filename: z.string().describe("Suggested filename for the download."),
-    /** @description File content — text or base64-encoded binary. */
-    content: z
-      .string()
-      .describe("File content \u2014 text or base64-encoded binary."),
-    /** @description MIME type of the file (e.g. "image/svg+xml", "application/json"). */
-    mimeType: z
-      .string()
-      .describe(
-        'MIME type of the file (e.g. "image/svg+xml", "application/json").',
-      ),
-    /** @description Content encoding. Defaults to "utf-8". Use "base64" for binary content. */
-    encoding: z
-      .union([z.literal("utf-8"), z.literal("base64")])
-      .optional()
-      .describe(
-        'Content encoding. Defaults to "utf-8". Use "base64" for binary content.',
-      ),
-  }),
-});
 
 /**
  * @description Result from a file download request.
@@ -753,6 +720,28 @@ export const McpUiClientCapabilitiesSchema = z.object({
     .describe(
       'Array of supported MIME types for UI resources.\nMust include `"text/html;profile=mcp-app"` for MCP Apps support.',
     ),
+});
+
+/**
+ * @description Request to download a file through the host.
+ *
+ * Sent from the View to the Host when the app wants to trigger a file download.
+ * Since MCP Apps run in sandboxed iframes where direct downloads are blocked,
+ * this provides a host-mediated mechanism for file exports.
+ * The host SHOULD show a confirmation dialog before initiating the download.
+ *
+ * @see {@link app!App.downloadFile `App.downloadFile`} for the method that sends this request
+ */
+export const McpUiDownloadFileRequestSchema = z.object({
+  method: z.literal("ui/download-file"),
+  params: z.object({
+    /** @description Resource contents to download — embedded (inline data) or linked (host fetches). Uses standard MCP resource types. */
+    contents: z
+      .array(z.union([EmbeddedResourceSchema, ResourceLinkSchema]))
+      .describe(
+        "Resource contents to download \u2014 embedded (inline data) or linked (host fetches). Uses standard MCP resource types.",
+      ),
+  }),
 });
 
 /**
