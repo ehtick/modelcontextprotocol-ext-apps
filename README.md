@@ -48,12 +48,12 @@
 
 The fastest way to build an MCP App is to let your AI coding agent do it. This repo ships four [Agent Skills](https://agentskills.io/) — install them once, then just ask:
 
-| Skill | What it does | Try it |
-| ----- | ------------ | ------ |
-| [`create-mcp-app`](./plugins/mcp-apps/skills/create-mcp-app/SKILL.md) | Scaffolds a new MCP App with an interactive UI from scratch | _"Create an MCP App"_ |
-| [`migrate-oai-app`](./plugins/mcp-apps/skills/migrate-oai-app/SKILL.md) | Converts an existing OpenAI App to use MCP Apps | _"Migrate from OpenAI Apps SDK"_ |
-| [`add-app-to-server`](./plugins/mcp-apps/skills/add-app-to-server/SKILL.md) | Adds interactive UI to an existing MCP server's tools | _"Add UI to my MCP server"_ |
-| [`convert-web-app`](./plugins/mcp-apps/skills/convert-web-app/SKILL.md) | Converts an existing web app into an MCP App | _"Convert my web app to an MCP App"_ |
+| Skill                                                                       | What it does                                                | Try it                               |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------ |
+| [`create-mcp-app`](./plugins/mcp-apps/skills/create-mcp-app/SKILL.md)       | Scaffolds a new MCP App with an interactive UI from scratch | _"Create an MCP App"_                |
+| [`migrate-oai-app`](./plugins/mcp-apps/skills/migrate-oai-app/SKILL.md)     | Converts an existing OpenAI App to use MCP Apps             | _"Migrate from OpenAI Apps SDK"_     |
+| [`add-app-to-server`](./plugins/mcp-apps/skills/add-app-to-server/SKILL.md) | Adds interactive UI to an existing MCP server's tools       | _"Add UI to my MCP server"_          |
+| [`convert-web-app`](./plugins/mcp-apps/skills/convert-web-app/SKILL.md)     | Converts an existing web app into an MCP App                | _"Convert my web app to an MCP App"_ |
 
 ### Install the Skills
 
@@ -172,7 +172,10 @@ To test local modifications with an MCP client, clone the repo, install, then po
   "mcpServers": {
     "<name>": {
       "command": "bash",
-      "args": ["-c", "cd ~/code/ext-apps/examples/<name>-server && npm run build >&2 && node dist/index.js --stdio"]
+      "args": [
+        "-c",
+        "cd ~/code/ext-apps/examples/<name>-server && npm run build >&2 && node dist/index.js --stdio"
+      ]
     }
   }
 }
