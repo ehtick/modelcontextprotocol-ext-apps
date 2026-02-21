@@ -1,23 +1,22 @@
 ---
 name: convert-web-app
-description: This skill should be used when the user asks to "convert my web app to an MCP App", "turn my website into an MCP App", "make my web page an MCP tool", "wrap my existing UI as an MCP App", "convert iframe embed to MCP App", "turn my SPA into an MCP App", or needs to convert an existing web application into an MCP App with server-side tool and resource registration. Provides guidance for analyzing existing web apps and creating MCP server + App wrappers.
+description: This skill should be used when the user asks to "add MCP App support to my web app", "turn my web app into a hybrid MCP App", "make my web page work as an MCP App too", "wrap my existing UI as an MCP App", "convert iframe embed to MCP App", "turn my SPA into an MCP App", or needs to add MCP App support to an existing web application while keeping it working standalone. Provides guidance for analyzing existing web apps and creating a hybrid web + MCP App with server-side tool and resource registration.
 ---
 
-# Convert Web App to MCP App
+# Add MCP App Support to a Web App
 
-Turn an existing web application into an MCP App that renders inline in MCP-enabled hosts like Claude Desktop.
+Add MCP App support to an existing web application so it works both as a standalone web app **and** as an MCP App that renders inline in MCP-enabled hosts like Claude Desktop — from a single codebase.
 
 ## How It Works
 
-The existing web app becomes the View (HTML resource) in an MCP App. A new MCP server is created to:
-
-1. Register a tool that the LLM calls to display the app
-2. Register the bundled HTML as a resource
-3. Pass data to the app via `structuredContent` instead of URL params / API calls
+The existing web app stays intact. A thin initialization layer detects whether the app is running inside an MCP host or as a regular web page, and fetches parameters from the appropriate source. A new MCP server wraps the app's bundled HTML as a resource and registers a tool to display it.
 
 ```
-Host calls tool → Server returns result → Host renders your web app → App receives data via MCP lifecycle
+Standalone:  Browser loads page → App reads URL params / APIs → renders
+MCP App:     Host calls tool → Server returns result → Host renders app in iframe → App reads MCP lifecycle → renders
 ```
+
+The app's rendering logic is shared — only the data source changes.
 
 ## Getting Reference Code
 
@@ -53,7 +52,7 @@ Learn and adapt from `/tmp/mcp-ext-apps/examples/basic-server-{framework}/`:
 | `basic-server-preact/` | `server.ts`, `src/mcp-app.tsx` |
 | `basic-server-solid/` | `server.ts`, `src/mcp-app.tsx` |
 
-### Conversion Reference Examples
+### Reference Examples
 
 | Example | Relevant Pattern |
 |---------|-----------------|
@@ -63,7 +62,7 @@ Learn and adapt from `/tmp/mcp-ext-apps/examples/basic-server-{framework}/`:
 
 ## Step 1: Analyze the Existing Web App
 
-Before writing any code, examine the existing web app to plan the conversion.
+Before writing any code, examine the existing web app to plan what needs to change.
 
 ### What to Investigate
 
@@ -71,17 +70,20 @@ Before writing any code, examine the existing web app to plan the conversion.
 2. **External dependencies** — CDN scripts, fonts, API endpoints, iframe embeds, WebSocket connections
 3. **Build system** — Current bundler (Webpack, Vite, Rollup, none), framework (React, Vue, vanilla), entry points
 4. **User interactions** — Does the app have inputs/forms that should map to tool parameters?
+5. **Runtime detection** — How to tell if the app is running inside an MCP host (e.g., check the current origin, a query param, or whether `window.parent !== window`)
 
-Present findings to the user and confirm the conversion approach.
+Present findings to the user and confirm the approach.
 
 ### Data Source Mapping
 
-| Data source in web app | MCP App equivalent |
+In hybrid mode, the app keeps its existing data sources for standalone use and adds MCP equivalents:
+
+| Standalone data source | MCP App equivalent |
 |---|---|
 | URL query parameters | `ontoolinput` / `ontoolresult` `arguments` or `structuredContent` |
 | REST API calls | `app.callServerTool()` to server-side tools, or keep direct API calls with CSP `connectDomains` |
 | Props / component inputs | `ontoolinput` `arguments` |
-| localStorage / sessionStorage | Not available in sandboxed iframe — move to `structuredContent` or server-side state |
+| localStorage / sessionStorage | Not available in sandboxed iframe — pass via `structuredContent` or server-side state |
 | WebSocket connections | Keep with CSP `connectDomains`, or convert to polling via app-only tools |
 | Hardcoded data | Move to tool `structuredContent` to make it dynamic |
 
@@ -89,7 +91,7 @@ Present findings to the user and confirm the conversion approach.
 
 MCP Apps HTML runs in a sandboxed iframe with no same-origin server. **Every** external origin must be declared in CSP — missing origins fail silently.
 
-**Before writing any conversion code**, build the app and investigate all origins it references:
+**Before writing any code**, build the app and investigate all origins it references:
 
 1. Build the app using the existing build command
 2. Search the resulting HTML, CSS, and JS for **every** origin (not just "external" origins — every network request will need CSP approval)
@@ -108,7 +110,7 @@ If no origins are found, the app may not need custom CSP domains.
 
 ## Step 3: Set Up the MCP Server
 
-Create a new MCP server with tool and resource registration. The web app has no existing server, so this is built from scratch.
+Create a new MCP server with tool and resource registration. This wraps the existing web app for MCP hosts.
 
 ### Dependencies
 
@@ -185,11 +187,11 @@ Add to `package.json`:
 
 ## Step 4: Adapt the Build Pipeline
 
-The UI must be bundled into a single HTML file using `vite-plugin-singlefile`. Without it, external assets won't load in the sandboxed iframe.
+The MCP App build must produce a single HTML file using `vite-plugin-singlefile`. The standalone web app build stays unchanged.
 
 ### Vite Configuration
 
-Create or update `vite.config.ts`:
+Create or update `vite.config.ts`. If the app already uses Vite, add `vite-plugin-singlefile` and a separate entry point for the MCP App build. If it uses another bundler, add a Vite config alongside for the MCP App build only.
 
 ```typescript
 import { defineConfig } from "vite";
@@ -210,7 +212,7 @@ Add framework-specific Vite plugins as needed (e.g., `@vitejs/plugin-react` for 
 
 ### HTML Entry Point
 
-Create `mcp-app.html` as the entry point for the MCP App build:
+Create `mcp-app.html` as a separate entry point for the MCP App build. This can point to the same app code — the runtime detection handles the rest:
 
 ```html
 <!doctype html>
@@ -222,118 +224,170 @@ Create `mcp-app.html` as the entry point for the MCP App build:
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="./src/mcp-app.ts"></script>
+    <script type="module" src="./src/main.ts"></script>
   </body>
 </html>
 ```
-
-If the web app already uses Vite, add `vite-plugin-singlefile` and create a separate entry point. If it uses another bundler, add a Vite config alongside for the MCP App build.
 
 ### Two-Phase Build
 
 1. Vite bundles the UI → `dist/mcp-app.html` (single file with all assets inlined)
 2. Server is compiled separately (TypeScript → JavaScript)
 
-## Step 5: Replace Data Sources with MCP App Lifecycle
+The standalone web app continues to build and deploy as before.
 
-This is the core conversion step. Replace the web app's data sources with MCP App lifecycle handlers.
+## Step 5: Add MCP App Initialization Alongside Existing Logic
 
-### URL Parameters → `ontoolinput`
+This is the core step. Instead of replacing the app's data sources, add an alternative initialization path for MCP mode. The app detects its environment at startup and reads parameters from the right source.
+
+### The Hybrid Pattern
 
 ```typescript
-// Before:
+import { App, PostMessageTransport } from "@modelcontextprotocol/ext-apps";
+
+// Detect whether we're running inside an MCP host.
+// Choose a detection method that fits the app:
+//   - Origin check: window.location.origin !== 'https://myhost.com'
+//   - Null origin (sandboxed iframe): window.location.origin === 'null'
+//   - Query param: new URL(location.href).searchParams.has('mcp')
+const isMcpApp = window.location.origin === "null";
+
+async function getParameters(): Promise<Record<string, string>> {
+  if (isMcpApp) {
+    // Running as MCP App — get params from tool lifecycle
+    const app = new App({ name: "My App", version: "1.0.0" });
+
+    // Register handlers BEFORE connect()
+    const params = await new Promise<Record<string, string>>((resolve) => {
+      app.ontoolresult = (result) => resolve(result.structuredContent ?? {});
+    });
+
+    await app.connect(new PostMessageTransport());
+    return params;
+  } else {
+    // Running as standalone web app — get params from URL
+    return Object.fromEntries(new URL(location.href).searchParams);
+  }
+}
+
+async function main() {
+  const params = await getParameters();
+  renderApp(params); // Same rendering logic for both modes
+}
+
+main().catch(console.error);
+```
+
+### URL Parameters (Hybrid)
+
+```typescript
+// Before (standalone only):
 const query = new URL(location.href).searchParams.get("q");
 renderApp(query);
 
-// After:
-app.ontoolinput = (params) => {
-  const query = params.arguments?.q;
-  renderApp(query);
-};
+// After (hybrid):
+async function getQuery(): Promise<string> {
+  if (isMcpApp) {
+    const app = new App({ name: "My App", version: "1.0.0" });
+    return new Promise((resolve) => {
+      app.ontoolinput = (params) => resolve(params.arguments?.q ?? "");
+      app.connect(new PostMessageTransport());
+    });
+  }
+  return new URL(location.href).searchParams.get("q") ?? "";
+}
+
+const query = await getQuery();
+renderApp(query); // Unchanged rendering logic
 ```
 
-### API Fetch → `app.callServerTool()`
+### API Calls (Hybrid)
 
 ```typescript
-// Before:
+// Before (standalone only):
 const data = await fetch("/api/data").then(r => r.json());
 
-// After:
-const result = await app.callServerTool("fetch-data", {});
-const data = result.structuredContent;
+// After (hybrid):
+async function fetchData(): Promise<any> {
+  if (isMcpApp) {
+    const result = await app.callServerTool("fetch-data", {});
+    return result.structuredContent;
+  }
+  return fetch("/api/data").then(r => r.json());
+}
 ```
 
-Or keep direct API calls with CSP `connectDomains`:
+Or keep direct API calls in both modes with CSP `connectDomains`:
 
 ```typescript
-// API calls can stay if the API is external and the CSP declares the domain
+// API calls can stay unchanged if the API is external and the CSP declares the domain
 // Declare connectDomains: ["api.example.com"] in the resource registration
 ```
 
-### Props / Component Inputs → `ontoolinput`
+### localStorage / sessionStorage (Hybrid)
 
 ```typescript
-// Before (e.g., passed via parent frame or global):
-const config = window.__APP_CONFIG__;
-
-// After:
-app.ontoolinput = (params) => {
-  const config = params.arguments;
-  initApp(config);
-};
-```
-
-### localStorage / sessionStorage → `structuredContent`
-
-```typescript
-// Before:
+// Before (standalone only):
 const saved = localStorage.getItem("settings");
 
-// After — pass via tool result:
-app.ontoolresult = (result) => {
-  const settings = result.structuredContent?.settings;
-  applySettings(settings);
-};
+// After (hybrid) — localStorage isn't available in sandboxed iframes:
+function getSettings(): any {
+  if (isMcpApp) {
+    // Will be provided via tool result
+    return null; // or a default
+  }
+  return JSON.parse(localStorage.getItem("settings") ?? "null");
+}
 ```
 
-### Complete Conversion Example
+### Complete Hybrid Example
 
 ```typescript
 import { App, PostMessageTransport, applyDocumentTheme, applyHostStyleVariables, applyHostFonts } from "@modelcontextprotocol/ext-apps";
 
-const app = new App({ name: "My App", version: "1.0.0" });
+const isMcpApp = window.location.origin === "null";
 
-// Register ALL handlers BEFORE connect()
-app.ontoolinput = (params) => {
-  // Replace URL params / props with tool arguments
-  renderApp(params.arguments);
-};
+async function initMcpApp(): Promise<Record<string, any>> {
+  const app = new App({ name: "My App", version: "1.0.0" });
 
-app.ontoolresult = (result) => {
-  // Replace API responses with structured content
-  updateApp(result.structuredContent);
-};
+  // Register ALL handlers BEFORE connect()
+  const params = await new Promise<Record<string, any>>((resolve) => {
+    app.ontoolinput = (input) => resolve(input.arguments ?? {});
+  });
 
-app.onhostcontextchanged = (ctx) => {
-  if (ctx.theme) applyDocumentTheme(ctx.theme);
-  if (ctx.styles?.variables) applyHostStyleVariables(ctx.styles.variables);
-  if (ctx.styles?.css?.fonts) applyHostFonts(ctx.styles.css.fonts);
-  if (ctx.safeAreaInsets) {
-    const { top, right, bottom, left } = ctx.safeAreaInsets;
-    document.body.style.padding = `${top}px ${right}px ${bottom}px ${left}px`;
-  }
-};
+  app.onhostcontextchanged = (ctx) => {
+    if (ctx.theme) applyDocumentTheme(ctx.theme);
+    if (ctx.styles?.variables) applyHostStyleVariables(ctx.styles.variables);
+    if (ctx.styles?.css?.fonts) applyHostFonts(ctx.styles.css.fonts);
+    if (ctx.safeAreaInsets) {
+      const { top, right, bottom, left } = ctx.safeAreaInsets;
+      document.body.style.padding = `${top}px ${right}px ${bottom}px ${left}px`;
+    }
+  };
 
-app.onteardown = async () => {
-  return {};
-};
+  app.onteardown = async () => {
+    return {};
+  };
 
-await app.connect(new PostMessageTransport());
+  await app.connect(new PostMessageTransport());
+  return params;
+}
+
+async function initStandaloneApp(): Promise<Record<string, any>> {
+  return Object.fromEntries(new URL(location.href).searchParams);
+}
+
+async function main() {
+  const params = isMcpApp ? await initMcpApp() : await initStandaloneApp();
+  renderApp(params); // Same rendering logic — no fork needed
+}
+
+main().catch(console.error);
 ```
 
-## Step 6: Add Host Styling Integration
+## Step 6: Add Host Styling Integration (MCP Mode Only)
 
-Replace hardcoded styles with host CSS variables for theme consistency.
+When running as an MCP App, integrate with host styling for theme consistency. Use CSS variable fallbacks so the app looks correct in both modes.
 
 **Vanilla JS** — use helper functions:
 ```typescript
@@ -354,7 +408,7 @@ const { app } = useApp({ appInfo, capabilities, onAppCreated });
 useHostStyles(app);
 ```
 
-**Using variables in CSS** — after applying, use `var()` with fallbacks for standalone testing:
+**Using variables in CSS** — use `var()` with fallbacks so standalone mode still looks right:
 
 ```css
 .container {
@@ -433,19 +487,20 @@ return {
 ## Common Mistakes to Avoid
 
 1. **Forgetting CSP declarations for external origins** — fails silently in the sandboxed iframe
-2. **Using `localStorage` / `sessionStorage`** — not available in sandboxed iframe; move to `structuredContent` or server-side state
+2. **Using `localStorage` / `sessionStorage` in MCP mode** — not available in sandboxed iframe; use fallbacks or pass via `structuredContent`
 3. **Missing `vite-plugin-singlefile`** — external assets won't load in the iframe
 4. **Registering handlers after `connect()`** — register ALL handlers BEFORE calling `app.connect()`
-5. **Hardcoding styles** — use host CSS variables for theme integration
+5. **Hardcoding styles without fallbacks** — use host CSS variables with `var(..., fallback)` so both modes look correct
 6. **Not handling safe area insets** — always apply `ctx.safeAreaInsets` in `onhostcontextchanged`
 7. **Forgetting text `content` fallback** — always provide `content` array for non-UI hosts
 8. **Forgetting resource registration** — the tool references a `resourceUri` that must have a matching resource
+9. **Replacing standalone logic instead of branching** — keep the original data sources intact; add the MCP path alongside them
 
 ## Testing
 
 ### Using basic-host
 
-Test the converted app with the basic-host example:
+Test the MCP App mode with the basic-host example:
 
 ```bash
 # Terminal 1: Build and run your server
@@ -462,8 +517,9 @@ Configure `SERVERS` with a JSON array of your server URLs (default: `http://loca
 
 ### Verify
 
-1. App loads without console errors
+1. **MCP mode**: App loads in basic-host without console errors
 2. `ontoolinput` handler fires with tool arguments
 3. `ontoolresult` handler fires with tool result
 4. Host styling (theme, fonts, colors) applies correctly
 5. External resources load (if CSP domains are configured)
+6. **Standalone mode**: App still works when opened directly in a browser
