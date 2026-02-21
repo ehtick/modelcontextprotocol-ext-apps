@@ -47,13 +47,15 @@
 
 ## Build with Agent Skills
 
-The fastest way to build an MCP App is to let your AI coding agent do it. This repo ships four [Agent Skills](https://agentskills.io/) — install them once, then just ask:
+The fastest way to build an MCP App is to let your AI coding agent do it. This
+repo ships four [Agent Skills](https://agentskills.io/) — install them once,
+then just ask:
 
-| Skill                                                                       | What it does                                                | Try it                               |
-| --------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------ |
-| [`create-mcp-app`](./plugins/mcp-apps/skills/create-mcp-app/SKILL.md)       | Scaffolds a new MCP App with an interactive UI from scratch | _"Create an MCP App"_                |
-| [`migrate-oai-app`](./plugins/mcp-apps/skills/migrate-oai-app/SKILL.md)     | Converts an existing OpenAI App to use MCP Apps             | _"Migrate from OpenAI Apps SDK"_     |
-| [`add-app-to-server`](./plugins/mcp-apps/skills/add-app-to-server/SKILL.md) | Adds interactive UI to an existing MCP server's tools       | _"Add UI to my MCP server"_          |
+| Skill                                                                       | What it does                                                | Try it                                |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------- |
+| [`create-mcp-app`](./plugins/mcp-apps/skills/create-mcp-app/SKILL.md)       | Scaffolds a new MCP App with an interactive UI from scratch | _"Create an MCP App"_                 |
+| [`migrate-oai-app`](./plugins/mcp-apps/skills/migrate-oai-app/SKILL.md)     | Converts an existing OpenAI App to use MCP Apps             | _"Migrate from OpenAI Apps SDK"_      |
+| [`add-app-to-server`](./plugins/mcp-apps/skills/add-app-to-server/SKILL.md) | Adds interactive UI to an existing MCP server's tools       | _"Add UI to my MCP server"_           |
 | [`convert-web-app`](./plugins/mcp-apps/skills/convert-web-app/SKILL.md)     | Turns an existing web app into a hybrid web + MCP App       | _"Add MCP App support to my web app"_ |
 
 ### Install the Skills
@@ -65,9 +67,15 @@ The fastest way to build an MCP App is to let your AI coding agent do it. This r
 /plugin install mcp-apps@modelcontextprotocol-ext-apps
 ```
 
-**Other agents** — any AI coding agent that supports [Agent Skills](https://agentskills.io/) can use these skills. See the [agent skills guide](./docs/agent-skills.md) for manual installation instructions.
+**Other agents** — any AI coding agent that supports
+[Agent Skills](https://agentskills.io/) can use these skills. See the
+[agent skills guide](./docs/agent-skills.md) for manual installation
+instructions.
 
-Once installed, verify by asking your agent _"What skills do you have?"_ — you should see `create-mcp-app`, `migrate-oai-app`, `add-app-to-server`, and `convert-web-app` in the list. Then just ask it to create or migrate an app and it will guide you through the rest.
+Once installed, verify by asking your agent _"What skills do you have?"_ — you
+should see `create-mcp-app`, `migrate-oai-app`, `add-app-to-server`, and
+`convert-web-app` in the list. Then just ask it to create or migrate an app and
+it will guide you through the rest.
 
 ## Supported Clients
 
@@ -80,23 +88,31 @@ Once installed, verify by asking your agent _"What skills do you have?"_ — you
   <a href="https://www.mcpjam.com/"><img src="https://img.shields.io/badge/MCPJam-client-8B5CF6" alt="MCPJam"></a>
 </p>
 
-> [!NOTE]
-> MCP Apps is an extension to the [core MCP specification](https://modelcontextprotocol.io/specification). Host support varies — see the [clients page](https://modelcontextprotocol.io/clients) for the full list.
+> [!NOTE] MCP Apps is an extension to the
+> [core MCP specification](https://modelcontextprotocol.io/specification). Host
+> support varies — see the
+> [clients page](https://modelcontextprotocol.io/clients) for the full list.
 
 ## Why MCP Apps?
 
-MCP tools return text and structured data. That works for many cases, but not when you need an interactive UI, like a chart, form, or video player.
+MCP tools return text and structured data. That works for many cases, but not
+when you need an interactive UI, like a chart, form, or video player.
 
-MCP Apps provide a standardized way to deliver interactive UIs from MCP servers. Your UI renders inline in the conversation, in context, in any compliant host.
+MCP Apps provide a standardized way to deliver interactive UIs from MCP servers.
+Your UI renders inline in the conversation, in context, in any compliant host.
 
 ## How It Works
 
-MCP Apps extend the Model Context Protocol by letting tools declare UI resources:
+MCP Apps extend the Model Context Protocol by letting tools declare UI
+resources:
 
-1. **Tool definition** — Your tool declares a `ui://` resource containing its HTML interface
+1. **Tool definition** — Your tool declares a `ui://` resource containing its
+   HTML interface
 2. **Tool call** — The LLM calls the tool on your server
-3. **Host renders** — The host fetches the resource and displays it in a sandboxed iframe
-4. **Bidirectional communication** — The host passes tool data to the UI via notifications, and the UI can call other tools through the host
+3. **Host renders** — The host fetches the resource and displays it in a
+   sandboxed iframe
+4. **Bidirectional communication** — The host passes tool data to the UI via
+   notifications, and the UI can call other tools through the host
 
 ## Getting Started
 
@@ -104,11 +120,15 @@ MCP Apps extend the Model Context Protocol by letting tools declare UI resources
 npm install -S @modelcontextprotocol/ext-apps
 ```
 
-**New here?** Start with the [Quickstart Guide](https://modelcontextprotocol.github.io/ext-apps/api/documents/Quickstart.html) to build your first MCP App.
+**New here?** Start with the
+[Quickstart Guide](https://modelcontextprotocol.github.io/ext-apps/api/documents/Quickstart.html)
+to build your first MCP App.
 
 ## Using the SDK
 
-The SDK serves three roles: app developers building interactive Views, host developers embedding those Views, and MCP server authors registering tools with UI metadata.
+The SDK serves three roles: app developers building interactive Views, host
+developers embedding those Views, and MCP server authors registering tools with
+UI metadata.
 
 | Package                                     | Purpose                                                   | Docs                                                                                                                |
 | ------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -117,13 +137,19 @@ The SDK serves three roles: app developers building interactive Views, host deve
 | `@modelcontextprotocol/ext-apps/app-bridge` | Embed and communicate with Views in your chat client      | [API Docs →](https://modelcontextprotocol.github.io/ext-apps/api/modules/app-bridge.html)                           |
 | `@modelcontextprotocol/ext-apps/server`     | Register tools and resources on your MCP server           | [API Docs →](https://modelcontextprotocol.github.io/ext-apps/api/modules/server.html)                               |
 
-There's no _supported_ host implementation in this repo (beyond the [examples/basic-host](https://github.com/modelcontextprotocol/ext-apps/tree/main/examples/basic-host) example).
+There's no _supported_ host implementation in this repo (beyond the
+[examples/basic-host](https://github.com/modelcontextprotocol/ext-apps/tree/main/examples/basic-host)
+example).
 
-The [MCP-UI](https://github.com/idosal/mcp-ui) client SDK offers a fully-featured MCP Apps framework used by a few hosts. Clients may choose to use it or roll their own implementation.
+The [MCP-UI](https://github.com/idosal/mcp-ui) client SDK offers a
+fully-featured MCP Apps framework used by a few hosts. Clients may choose to use
+it or roll their own implementation.
 
 ## Examples
 
-The [`examples/`](https://github.com/modelcontextprotocol/ext-apps/tree/main/examples) directory contains demo apps showcasing real-world use cases.
+The
+[`examples/`](https://github.com/modelcontextprotocol/ext-apps/tree/main/examples)
+directory contains demo apps showcasing real-world use cases.
 
 <!-- prettier-ignore-start -->
 | | | |
@@ -150,7 +176,9 @@ The [`examples/`](https://github.com/modelcontextprotocol/ext-apps/tree/main/exa
 
 #### With basic-host
 
-To run all examples locally using [basic-host](https://github.com/modelcontextprotocol/ext-apps/tree/main/examples/basic-host) (the reference host implementation included in this repo):
+To run all examples locally using
+[basic-host](https://github.com/modelcontextprotocol/ext-apps/tree/main/examples/basic-host)
+(the reference host implementation included in this repo):
 
 ```bash
 git clone https://github.com/modelcontextprotocol/ext-apps.git
@@ -163,7 +191,9 @@ Then open http://localhost:8080/.
 
 #### With MCP Clients
 
-Every Node.js example is published as `@modelcontextprotocol/server-<name>`. To add one to an MCP client that supports stdio (Claude Desktop, VS Code, etc.), use this pattern:
+Every Node.js example is published as `@modelcontextprotocol/server-<name>`. To
+add one to an MCP client that supports stdio (Claude Desktop, VS Code, etc.),
+use this pattern:
 
 ```json
 {
@@ -176,11 +206,14 @@ Every Node.js example is published as `@modelcontextprotocol/server-<name>`. To 
 }
 ```
 
-For example, to add the map server: `@modelcontextprotocol/server-map`. The Python examples (`qr-server`, `say-server`) use `uv run` instead — see their READMEs for details.
+For example, to add the map server: `@modelcontextprotocol/server-map`. The
+Python examples (`qr-server`, `say-server`) use `uv run` instead — see their
+READMEs for details.
 
 #### Local Development
 
-To test local modifications with an MCP client, clone the repo, install, then point your client at a local build:
+To test local modifications with an MCP client, clone the repo, install, then
+point your client at a local build:
 
 ```json
 {
@@ -211,9 +244,11 @@ To test local modifications with an MCP client, clone the repo, install, then po
 
 - [Quickstart Guide](https://modelcontextprotocol.github.io/ext-apps/api/documents/Quickstart.html)
 - [API Documentation](https://modelcontextprotocol.github.io/ext-apps/api/)
-- [Specification (2026-01-26)](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx) ([Draft](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/draft/apps.mdx))
+- [Specification (2026-01-26)](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx)
+  ([Draft](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/draft/apps.mdx))
 - [SEP-1865 Discussion](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/1865)
 
 ## Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to get started, submit pull requests, and report issues.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for
+guidelines on how to get started, submit pull requests, and report issues.
