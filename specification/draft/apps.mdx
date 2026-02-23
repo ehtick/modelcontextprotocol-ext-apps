@@ -1079,8 +1079,6 @@ The `contents` array uses standard MCP resource types (`EmbeddedResource` and `R
 Host behavior:
 * Host SHOULD show a confirmation dialog before initiating the download.
 * For `EmbeddedResource`, host SHOULD derive the filename from the last segment of `resource.uri`.
-* For `EmbeddedResource` with `blob`, host MUST decode the content from base64 before creating the file.
-* For `ResourceLink`, host MAY fetch the resource on behalf of the app or open the URI directly.
 * Host MAY reject the download based on security policy, file size limits, or user preferences.
 * Host SHOULD sanitize filenames to prevent path traversal.
 
