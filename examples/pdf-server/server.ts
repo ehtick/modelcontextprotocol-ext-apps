@@ -60,7 +60,7 @@ const DIST_DIR = import.meta.filename.endsWith(".ts")
 // =============================================================================
 
 export function isFileUrl(url: string): boolean {
-  return url.startsWith("file://");
+  return url.startsWith("file://") || url.startsWith("computer://");
 }
 
 export function isArxivUrl(url: string): boolean {
@@ -81,7 +81,8 @@ export function normalizeArxivUrl(url: string): string {
 }
 
 export function fileUrlToPath(fileUrl: string): string {
-  return decodeURIComponent(fileUrl.replace("file://", ""));
+  // Support both file:// and computer:// (used by some clients for local files)
+  return decodeURIComponent(fileUrl.replace(/^(?:file|computer):\/\//, ""));
 }
 
 export function pathToFileUrl(filePath: string): string {
@@ -89,29 +90,86 @@ export function pathToFileUrl(filePath: string): string {
   return `file://${encodeURIComponent(absolutePath).replace(/%2F/g, "/")}`;
 }
 
-export function validateUrl(url: string): { valid: boolean; error?: string } {
-  if (isFileUrl(url)) {
-    const filePath = fileUrlToPath(url);
+/**
+ * Check if `dir` is an ancestor of `filePath` using path.relative,
+ * which is more robust than string prefix matching (handles normalization).
+ */
+export function isAncestorDir(dir: string, filePath: string): boolean {
+  const rel = path.relative(dir, filePath);
+  // Must be non-empty (not the dir itself when checking files),
+  // must not start with ".." (escaping), and must not be absolute (different root).
+  return rel !== "" && !rel.startsWith("..") && !path.isAbsolute(rel);
+}
+
+/**
+ * Check if `url` looks like an absolute local file path (not a URL scheme).
+ * Handles Unix paths (/...), home-relative (~), and Windows drive letters (C:\...).
+ */
+function isLocalPath(url: string): boolean {
+  return (
+    url.startsWith("/") || url.startsWith("~") || /^[A-Za-z]:[/\\]/.test(url)
+  );
+}
+
+export function validateUrl(url: string): {
+  valid: boolean;
+  error?: string;
+} {
+  if (isFileUrl(url) || isLocalPath(url)) {
+    // fileUrlToPath already decodes percent-encoding; for bare paths,
+    // decode here in case the client sends %20 for spaces etc.
+    const filePath = isFileUrl(url)
+      ? fileUrlToPath(url)
+      : decodeURIComponent(url);
     const resolved = path.resolve(filePath);
 
-    // Check exact match (CLI args)
-    const exactMatch = allowedLocalFiles.has(filePath);
+    // Check exact match (CLI args / roots)
+    if (allowedLocalFiles.has(resolved)) {
+      if (!fs.existsSync(resolved)) {
+        return { valid: false, error: `File not found: ${resolved}` };
+      }
+      return { valid: true };
+    }
 
-    // Check directory match (MCP roots)
-    const dirMatch = [...allowedLocalDirs].some(
-      (dir) => resolved === dir || resolved.startsWith(dir + path.sep),
+    // Check directory match (MCP roots / CLI dirs).
+    // Try both the raw path and its realpath (resolves symlinks).
+    let realResolved: string | undefined;
+    try {
+      realResolved = fs.realpathSync(resolved);
+    } catch {
+      // File may not exist yet at this path
+    }
+    if (
+      [...allowedLocalDirs].some((dir) => {
+        let realDir: string | undefined;
+        try {
+          realDir = fs.realpathSync(dir);
+        } catch {
+          // Dir may not exist
+        }
+        return (
+          isAncestorDir(dir, resolved) ||
+          (realResolved != null && isAncestorDir(dir, realResolved)) ||
+          (realDir != null && isAncestorDir(realDir, resolved)) ||
+          (realDir != null &&
+            realResolved != null &&
+            isAncestorDir(realDir, realResolved))
+        );
+      })
+    ) {
+      if (!fs.existsSync(resolved)) {
+        return { valid: false, error: `File not found: ${resolved}` };
+      }
+      return { valid: true };
+    }
+
+    console.error(
+      `[pdf-server] Local file not in allowed list: ${resolved}\n  Allowed dirs: ${[...allowedLocalDirs].join(", ")}`,
     );
-
-    if (!exactMatch && !dirMatch) {
-      return {
-        valid: false,
-        error: `Local file not in allowed list: ${filePath}`,
-      };
-    }
-    if (!fs.existsSync(filePath)) {
-      return { valid: false, error: `File not found: ${filePath}` };
-    }
-    return { valid: true };
+    return {
+      valid: false,
+      error: `Local file not in allowed list: ${resolved}\nAllowed directories: ${[...allowedLocalDirs].join(", ")}`,
+    };
   }
 
   // Remote URL - require HTTPS
@@ -238,8 +296,10 @@ export function createPdfCache(): PdfCache {
     const normalized = isArxivUrl(url) ? normalizeArxivUrl(url) : url;
     const clampedByteCount = Math.min(byteCount, MAX_CHUNK_BYTES);
 
-    if (isFileUrl(normalized)) {
-      const filePath = fileUrlToPath(normalized);
+    if (isFileUrl(normalized) || isLocalPath(normalized)) {
+      const filePath = isFileUrl(normalized)
+        ? fileUrlToPath(normalized)
+        : decodeURIComponent(normalized);
       const stats = await fs.promises.stat(filePath);
       const totalBytes = stats.size;
 
@@ -353,11 +413,17 @@ async function refreshRoots(server: Server): Promise<void> {
     const { roots } = await server.listRoots();
     allowedLocalDirs.clear();
     for (const root of roots) {
-      if (root.uri.startsWith("file://")) {
+      if (isFileUrl(root.uri)) {
         const dir = fileUrlToPath(root.uri);
         const resolved = path.resolve(dir);
         try {
-          if (fs.statSync(resolved).isDirectory()) {
+          const s = fs.statSync(resolved);
+          if (s.isFile()) {
+            console.error(
+              `[pdf-server] Root is a file, not a directory (skipped): ${resolved}`,
+            );
+            allowedLocalFiles.add(resolved);
+          } else if (s.isDirectory()) {
             allowedLocalDirs.add(resolved);
             console.error(`[pdf-server] Root directory allowed: ${resolved}`);
           }
@@ -441,7 +507,7 @@ export function createServer(): McpServer {
       title: "Read PDF Bytes",
       description: "Read a range of bytes from a PDF (max 512KB per request)",
       inputSchema: {
-        url: z.string().describe("PDF URL"),
+        url: z.string().describe("PDF URL or local file path"),
         offset: z.number().min(0).default(0).describe("Byte offset"),
         byteCount: z
           .number()
@@ -471,7 +537,11 @@ export function createServer(): McpServer {
 
       try {
         const normalized = isArxivUrl(url) ? normalizeArxivUrl(url) : url;
-        const { data, totalBytes } = await readPdfRange(url, offset, byteCount);
+        const { data, totalBytes } = await readPdfRange(
+          normalized,
+          offset,
+          byteCount,
+        );
 
         // Base64 encode for JSON transport
         const bytes = Buffer.from(data).toString("base64");
@@ -520,7 +590,10 @@ Accepts:
 - Local files under directories provided by the client as MCP roots
 - Any remote PDF accessible via HTTPS`,
       inputSchema: {
-        url: z.string().default(DEFAULT_PDF).describe("PDF URL"),
+        url: z
+          .string()
+          .default(DEFAULT_PDF)
+          .describe("PDF URL or local file path"),
         page: z.number().min(1).default(1).describe("Initial page"),
       },
       outputSchema: z.object({
