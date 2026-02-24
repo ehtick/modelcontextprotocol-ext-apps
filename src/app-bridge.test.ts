@@ -712,6 +712,36 @@ describe("App <-> AppBridge integration", () => {
       expect(result.content).toEqual(resultContent);
     });
 
+    it("ondownloadfile setter registers handler for ui/download-file requests", async () => {
+      const downloadParams = {
+        contents: [
+          {
+            type: "resource" as const,
+            resource: {
+              uri: "file:///export.json",
+              mimeType: "application/json",
+              text: '{"key":"value"}',
+            },
+          },
+        ],
+      };
+      const receivedRequests: unknown[] = [];
+
+      bridge.ondownloadfile = async (params) => {
+        receivedRequests.push(params);
+        return {};
+      };
+
+      await bridge.connect(bridgeTransport);
+      await app.connect(appTransport);
+
+      const result = await app.downloadFile(downloadParams);
+
+      expect(receivedRequests).toHaveLength(1);
+      expect(receivedRequests[0]).toMatchObject(downloadParams);
+      expect(result).toEqual({});
+    });
+
     it("callServerTool throws a helpful error when called with a string instead of params object", async () => {
       await bridge.connect(bridgeTransport);
       await app.connect(appTransport);
