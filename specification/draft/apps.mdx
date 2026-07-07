@@ -659,6 +659,22 @@ Example:
 They describe the features and capabilities that the Host supports.
 
 ```typescript
+/** Content block modalities that the host supports for a given capability. */
+interface SupportedContentBlockModalities {
+  /** Host supports text content blocks. */
+  text?: {};
+  /** Host supports image content blocks. */
+  image?: {};
+  /** Host supports audio content blocks. */
+  audio?: {};
+  /** Host supports resource content blocks. */
+  resource?: {};
+  /** Host supports resource link content blocks. */
+  resourceLink?: {};
+  /** Host supports structured content. */
+  structuredContent?: {};
+}
+
 interface HostCapabilities {
   /** Experimental features (structure TBD). */
   experimental?: {};
@@ -678,14 +694,6 @@ interface HostCapabilities {
   };
   /** Host accepts log messages. */
   logging?: {};
-  /**
-   * Host supports LLM sampling (sampling/createMessage) from the view.
-   * Mirrors MCP ClientCapabilities.sampling so hosts can pass it through.
-   */
-  sampling?: {
-    /** Host supports tool use via `tools` and `toolChoice` params (SEP-1577). */
-    tools?: {};
-  };
   /** Sandbox configuration applied by the host. */
   sandbox?: {
     /** Permissions granted by the host (camera, microphone, geolocation, clipboard-write). */
@@ -706,6 +714,21 @@ interface HostCapabilities {
       /** Approved base URIs for the document (base-uri directive). */
       baseUriDomains?: string[];
     };
+  };
+  /**
+   * Host accepts context updates (ui/update-model-context) to be included in
+   * the model's context for future turns.
+   */
+  updateModelContext?: SupportedContentBlockModalities;
+  /** Host supports receiving content messages (ui/message) from the view. */
+  message?: SupportedContentBlockModalities;
+  /**
+   * Host supports LLM sampling (sampling/createMessage) from the view.
+   * Mirrors MCP ClientCapabilities.sampling so hosts can pass it through.
+   */
+  sampling?: {
+    /** Host supports tool use via `tools` and `toolChoice` params (SEP-1577). */
+    tools?: {};
   };
 }
 ```
